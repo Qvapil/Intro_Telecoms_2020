@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 import graycode
+from scipy.io import wavfile
 
 #constants
 A=1
@@ -533,13 +534,168 @@ for i in range(len(newgrayvalue5i)):
     text5i+=chr(int(newdec5i[i]))
     text15i+=chr(int(newdec15i[i]))
 
-f = open("shannon_odd_5db.txt", "w")
+f = open("shannon_odd_5dbi.txt", "w")
 f.write(text5i)
 f.close()
 
-f = open("shannon_odd_15db.txt", "w")
+f = open("shannon_odd_15dbi.txt", "w")
 f.write(text15i)
 f.close()
+
+#5a: plot sound file
+sampleratei,data5i=wavfile.read('soundfile1_lab2.wav')
+
+fig21i, ax21i = plt.subplots()
+plt.plot(data5i)
+ax21i.grid(axis='y')
+ax21i.set_title('Sound signal')
+ax21i.set_xlabel('Samples')
+
+#5b: quantize sound signal
+Ri=8
+Li=2**Ri
+maxi=max(data5i)
+Di=2*maxi/(Li-1)
+data5iquant=Di*(np.floor(data5i/Di)+1/2)
+
+quantlevels5i=np.linspace(-max(data5i),max(data5i),256)
+graycode8=graycode.gen_gray_codes(8)
+
+fig22i, ax22i = plt.subplots()
+plt.plot(data5iquant,'.')
+plt.yticks(quantlevels5i,graycode8)
+ax22i.grid(axis='y')
+ax22i.set_title('Quantized sound signal')
+ax22i.set_ylabel('Gray code (in decimal)')
+
+#5c: qpsk modulation of sound signal
+grayvalues5i=np.zeros(len(data5iquant))
+for i in range(len(data5iquant)):
+    grayvalues5i[i]=graycode8[int((data5iquant[i]+maxi)/Di)]
+
+bits5i=''
+for i in range(len(grayvalues5i)):
+    bnr = bin(int(grayvalues5i[i])).replace('0b','')
+    x = bnr[::-1]
+    while len(x) < 8:
+        x += '0'
+    bnr = x[::-1]
+    bits5i+=str(bnr)
+
+soundQPSKxi=np.zeros(int(len(bits5i)/2))
+soundQPSKyi=np.zeros(int(len(bits5i)/2))
+a5i=1/np.sqrt(2)
+
+for i in range(0,len(bits5i),2):
+    if bits5i[i]=='0' and bits5i[i+1]=='0':
+        soundQPSKxi[int(i/2)]=a5i
+        soundQPSKyi[int(i/2)]=a5i
+    elif bits5i[i]=='0' and bits5i[i+1]=='1':
+        soundQPSKxi[int(i/2)]=-a5i
+        soundQPSKyi[int(i/2)]=a5i
+    elif bits5i[i]=='1' and bits5i[i+1]=='1':
+        soundQPSKxi[int(i/2)]=-a5i
+        soundQPSKyi[int(i/2)]=-a5i
+    elif bits5i[i]=='1' and bits5i[i+1]=='0':
+        soundQPSKxi[int(i/2)]=a5i
+        soundQPSKyi[int(i/2)]=-a5i
+
+fig23i, ax23i = plt.subplots()
+plt.plot(soundQPSKxi,soundQPSKyi,'*r')
+plt.xlim(-1.5,1.5)
+plt.ylim(-1.5,1.5)
+ax23i.set_aspect('equal')
+ax23i.set_title('Constellation Diagram of QPSK modulated sound')
+ax23i.set_xlabel('In phase')
+ax23i.set_ylabel('Quadrature')
+
+#5d: adding noise
+symbolxi=[a5i,-a5i,a5i,-a5i]
+symbolyi=[a5i,a5i,-a5i,-a5i]
+#
+# def energyi(a):
+#     return np.sign(a)*np.sqrt(a**2*Tb)
+#
+# def awgn_ampli(length,SNR,E):
+#     N0=E/20**(SNR/10)
+#     noise=np.random.normal(0,np.sqrt(N0),length)
+#     return noise
+
+Tb=1
+Eti=1
+
+noisysoundQPSKxi1=soundQPSKxi+energyi(awgn_ampli(len(soundQPSKxi),4,Eti))
+noisysoundQPSKyi1=soundQPSKyi++energyi(awgn_ampli(len(soundQPSKyi),4,Eti))
+
+noisysoundQPSKxi2=soundQPSKxi+energyi(awgn_ampli(len(soundQPSKxi),14,Eti))
+noisysoundQPSKyi2=soundQPSKyi+energyi(awgn_ampli(len(soundQPSKyi),14,Eti))
+
+#5e: constellations of noisy signals
+fig24i, ax24i = plt.subplots()
+plt.scatter(noisysoundQPSKxi1,noisysoundQPSKyi1,marker='.',label='signal with noise')
+plt.plot(symbolxi,symbolyi,'*r',label='signal without noise')
+plt.xlim(-3,3)
+plt.ylim(-3,3)
+ax24i.set_aspect('equal')
+ax24i.set_title('Constellation Diagram of noisy QPSK sound with SNR=4db')
+ax24i.set_xlabel('In phase')
+ax24i.set_ylabel('Quadrature')
+ax24i.legend()
+
+fig25i, ax25i = plt.subplots()
+plt.scatter(noisysoundQPSKxi2,noisysoundQPSKyi2,marker='.',label='signal with noise')
+plt.plot(symbolxi,symbolyi,'*r',label='signal without noise')
+plt.xlim(-2,2)
+plt.ylim(-2,2)
+ax25i.set_aspect('equal')
+ax25i.set_title('Constellation Diagram of noisy QPSK sound with SNR=14db')
+ax25i.set_xlabel('In phase')
+ax25i.set_ylabel('Quadrature')
+ax25i.legend()
+
+#5st: BER of noisy sound
+errors5i=np.zeros(2)
+for i in range(len(soundQPSKxi)):
+    if noisysoundQPSKxi1[i]*soundQPSKxi[i]<0 or noisysoundQPSKyi1[i]*soundQPSKyi[i]<0:
+        errors5i[0]+=1
+    if noisysoundQPSKxi2[i]*soundQPSKxi[i]<0 or noisysoundQPSKyi2[i]*soundQPSKyi[i]<0:
+        errors5i[1]+=1
+
+Qs=np.zeros(2)
+N0ti1=Eti/20**(4/10)
+N0ti2=Eti/20**(14/10)
+for i in np.linspace(np.sqrt(Eti/N0ti1),1000,1000):
+    Qs[0]+=math.exp(-i**2/2)/np.sqrt(2*math.pi)
+for i in np.linspace(np.sqrt(Eti/N0ti2),1000,1000):
+    Qs[1]+=math.exp(-i**2/2)/np.sqrt(2*math.pi)
+
+print('Experimental BER for 4db noise: {}'.format(errors5i[0]/len(soundQPSKxi)))
+print('Experimental BER for 14db noise: {}'.format(errors5i[1]/len(soundQPSKxi)))
+print('Theoretical BER for 4db noise: {}'.format(Qs[0]))
+print('Theoretical BER for 14db noise: {}'.format(Qs[1]))
+
+#5z: remaking audio signal
+newbits4si=qpskDemodulate(noisysoundQPSKxi1,noisysoundQPSKyi1)
+newbits14si=qpskDemodulate(noisysoundQPSKxi2,noisysoundQPSKyi2)
+
+newgrayvalue4si=np.zeros(int(len(newbits4si)/8))
+newgrayvalue14si=np.zeros(int(len(newbits4si)/8))
+
+for i in range(0,len(newbits4si),8):
+    newgrayvalue4si[int(i/8)]=int(newbits4si[i:i+8],2)
+    newgrayvalue14si[int(i/8)]=int(newbits14si[i:i+8],2)
+
+dict5i=dict(zip(quantlevels5i,graycode8))
+
+newdec4si=np.zeros(len(newgrayvalue4si))
+newdec14si=np.zeros(len(newgrayvalue14si))
+inv_dict5i = {v: k for k, v in dict5i.items()}
+for i in range(len(newgrayvalue4si)):
+    newdec4si[i]=np.round(inv_dict5i.get(newgrayvalue4si[i]))
+    newdec14si[i]=np.round(inv_dict5i.get(newgrayvalue14si[i]))
+
+wavfile.write('soundfile1_lab2_4dbi.wav',44100,newdec4si)
+wavfile.write('soundfile1_lab2_14dbi.wav',44100,newdec14si)
 
 
 plt.show()
