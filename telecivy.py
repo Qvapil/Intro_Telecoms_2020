@@ -56,16 +56,10 @@ ax4i.set_ylabel('Amplitude (V)')
 
 #2.a: quantizing y(t) sampled with sampling frequency fs1=20fm
 
-# def quantize5bit(signal):
-#     L=2**Ri
-#     D=(max(signal)-min(signal))/(L-1)
-#     return D*(np.floor(signal/D)+1/2)
 Ri=5
 Li=2**Ri
 Di=2*(max(y1i))/(Li-1)
 y1i_quant=Di*(np.floor(y1i/Di)+1/2)
-
-# y1i_quant=quantize5bit(y1i)
 
 gray_code=['00000','00001','00011','00010','00110','00111','00101','00100','01100','01101','01111','01110','01010','01011','01001','01000','11000','11001','11011','11010','11110','11111','11101','11100','10100','10101','10111','10110','10010','10011','10001','10000']
 quant2levelsi=np.linspace(-1,1,32)
@@ -116,12 +110,6 @@ def modulatehli(bits,a):
             modsig[i]=a
     return modsig
 
-# polar_nrz_i=np.zeros(len(bitsnrzi))
-# for i in range(len(bitsnrzi)):
-#     if bitsnrzi[i]=='0':
-#         polar_nrz_i[i]=-fmi
-#     elif bitsnrzi[i]=='1':
-#         polar_nrz_i[i]=fmi
 polar_nrz_i=modulatehli(bitsnrzi,fmi)
 
 fig6i, ax6i = plt.subplots()
@@ -612,14 +600,6 @@ ax23i.set_ylabel('Quadrature')
 #5d: adding noise
 symbolxi=[a5i,-a5i,a5i,-a5i]
 symbolyi=[a5i,a5i,-a5i,-a5i]
-#
-# def energyi(a):
-#     return np.sign(a)*np.sqrt(a**2*Tb)
-#
-# def awgn_ampli(length,SNR,E):
-#     N0=E/20**(SNR/10)
-#     noise=np.random.normal(0,np.sqrt(N0),length)
-#     return noise
 
 Tb=1
 Eti=1
@@ -694,8 +674,8 @@ for i in range(len(newgrayvalue4si)):
     newdec4si[i]=np.round(inv_dict5i.get(newgrayvalue4si[i]))
     newdec14si[i]=np.round(inv_dict5i.get(newgrayvalue14si[i]))
 
-wavfile.write('soundfile1_lab2_4dbi.wav',44100,newdec4si)
-wavfile.write('soundfile1_lab2_14dbi.wav',44100,newdec14si)
+wavfile.write('soundfile1_lab2_4dbi.wav',sampleratei,newdec4si)
+wavfile.write('soundfile1_lab2_14dbi.wav',sampleratei,newdec14si)
 
 
 plt.show()
