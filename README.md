@@ -1,4 +1,4 @@
-# Telecoms_2020
+# Intro_Telecoms_2020
 Semester Project for Intro to Telecommunications course, 5th Semester 2020 of the Electrical and Computer Engineering School at the National Technical University of Athens.
 
 In this project we implemented basic signal processing ideas such as:
